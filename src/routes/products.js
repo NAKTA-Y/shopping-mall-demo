@@ -1,23 +1,29 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { products } = require("../data/dummy");
+const productService = require('../services/productService');
 
-// GET /products?category=전자기기
-router.get("/", (req, res) => {
-  const { category } = req.query;
-  const result = category
-    ? products.filter((p) => p.category === category)
-    : products;
-  res.json({ success: true, data: result });
+// GET /products?page=1&limit=20&categoryId=cat-01&minPrice=10000&maxPrice=100000&sort=popular&search=노트북&isFeatured=true&inStock=true
+router.get('/', async (req, res, next) => {
+  try {
+    const { page, limit, categoryId, minPrice, maxPrice, sort, search } = req.query;
+    const isFeatured = req.query.isFeatured === 'true' ? true : undefined;
+    const inStock = req.query.inStock === 'true' ? true : undefined;
+
+    const result = await productService.listProducts({ page, limit, categoryId, minPrice, maxPrice, sort, search, isFeatured, inStock });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // GET /products/:id
-router.get("/:id", (req, res) => {
-  const product = products.find((p) => p.id === Number(req.params.id));
-  if (!product) {
-    return res.status(404).json({ success: false, message: "상품을 찾을 수 없습니다." });
+router.get('/:id', async (req, res, next) => {
+  try {
+    const product = await productService.getProduct(req.params.id);
+    res.json({ success: true, data: product });
+  } catch (err) {
+    next(err);
   }
-  res.json({ success: true, data: product });
 });
 
 module.exports = router;

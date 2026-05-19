@@ -1,42 +1,61 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { cart, products } = require("../data/dummy");
+const cartService = require('../services/cartService');
+const { requireAuth } = require('../middleware/auth');
+
+// 모든 장바구니 엔드포인트는 인증 필요
+router.use(requireAuth);
 
 // GET /cart
-router.get("/", (req, res) => {
-  res.json({ success: true, data: cart });
+router.get('/', async (req, res, next) => {
+  try {
+    const cart = await cartService.getCart(req.user.id);
+    res.json({ success: true, data: cart });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // POST /cart  { productId, quantity }
-router.post("/", (req, res) => {
-  const { productId, quantity = 1 } = req.body;
-  const product = products.find((p) => p.id === Number(productId));
-
-  if (!product) {
-    return res.status(404).json({ success: false, message: "상품을 찾을 수 없습니다." });
+router.post('/', async (req, res, next) => {
+  try {
+    const { productId, quantity } = req.body;
+    const cart = await cartService.addItem(req.user.id, { productId, quantity });
+    res.status(201).json({ success: true, data: cart });
+  } catch (err) {
+    next(err);
   }
-  if (quantity < 1) {
-    return res.status(400).json({ success: false, message: "수량은 1 이상이어야 합니다." });
-  }
+});
 
-  const existing = cart.find((item) => item.productId === product.id);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    cart.push({ cartItemId: Date.now(), productId: product.id, name: product.name, price: product.price, quantity });
+// PATCH /cart/:cartItemId  { quantity }
+router.patch('/:cartItemId', async (req, res, next) => {
+  try {
+    const { quantity } = req.body;
+    const cart = await cartService.updateItem(req.user.id, req.params.cartItemId, { quantity });
+    res.json({ success: true, data: cart });
+  } catch (err) {
+    next(err);
   }
-
-  res.status(201).json({ success: true, data: cart });
 });
 
 // DELETE /cart/:cartItemId
-router.delete("/:cartItemId", (req, res) => {
-  const idx = cart.findIndex((item) => item.cartItemId === Number(req.params.cartItemId));
-  if (idx === -1) {
-    return res.status(404).json({ success: false, message: "장바구니 항목을 찾을 수 없습니다." });
+router.delete('/:cartItemId', async (req, res, next) => {
+  try {
+    const cart = await cartService.removeItem(req.user.id, req.params.cartItemId);
+    res.json({ success: true, data: cart });
+  } catch (err) {
+    next(err);
   }
-  cart.splice(idx, 1);
-  res.json({ success: true, data: cart });
+});
+
+// DELETE /cart  (전체 비우기)
+router.delete('/', async (req, res, next) => {
+  try {
+    await cartService.clearCart(req.user.id);
+    res.json({ success: true, message: '장바구니를 비웠습니다.' });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

@@ -1,35 +1,50 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { orders, cart } = require("../data/dummy");
+const orderService = require('../services/orderService');
+const { requireAuth } = require('../middleware/auth');
 
-// POST /orders  — 현재 장바구니로 주문 생성
-router.post("/", (req, res) => {
-  if (cart.length === 0) {
-    return res.status(400).json({ success: false, message: "장바구니가 비어 있습니다." });
+router.use(requireAuth);
+
+// GET /orders?page=1&limit=10
+router.get('/', async (req, res, next) => {
+  try {
+    const { page, limit } = req.query;
+    const result = await orderService.listOrders(req.user.id, { page, limit });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
   }
-
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const order = {
-    orderId: Date.now(),
-    items: [...cart],
-    total,
-    status: "결제완료",
-    createdAt: new Date().toISOString(),
-  };
-
-  orders.push(order);
-  cart.length = 0;
-
-  res.status(201).json({ success: true, data: order });
 });
 
-// GET /orders/:orderId
-router.get("/:orderId", (req, res) => {
-  const order = orders.find((o) => o.orderId === Number(req.params.orderId));
-  if (!order) {
-    return res.status(404).json({ success: false, message: "주문을 찾을 수 없습니다." });
+// POST /orders  { paymentMethod, shippingAddress: { zipCode, line1, line2, recipient, phone } }
+router.post('/', async (req, res, next) => {
+  try {
+    const { paymentMethod, shippingAddress } = req.body;
+    const order = await orderService.createOrder(req.user.id, { paymentMethod, shippingAddress });
+    res.status(201).json({ success: true, data: order });
+  } catch (err) {
+    next(err);
   }
-  res.json({ success: true, data: order });
+});
+
+// GET /orders/:id
+router.get('/:id', async (req, res, next) => {
+  try {
+    const order = await orderService.getOrder(req.user.id, req.params.id);
+    res.json({ success: true, data: order });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /orders/:id/cancel
+router.post('/:id/cancel', async (req, res, next) => {
+  try {
+    const order = await orderService.cancelOrder(req.user.id, req.params.id);
+    res.json({ success: true, data: order });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

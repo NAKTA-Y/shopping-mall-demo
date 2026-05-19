@@ -1,17 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const adminService = require('../services/adminService');
-const { requireAuth } = require('../middleware/auth');
-const ApiError = require('../utils/ApiError');
-
-function requireAdmin(req, res, next) {
-  if (req.user.role !== 'admin') {
-    return next(new ApiError(403, '관리자 권한이 필요합니다.'));
-  }
-  next();
-}
-
-router.use(requireAuth, requireAdmin);
 
 // GET /admin/stats/summary
 router.get('/stats/summary', async (req, res, next) => {

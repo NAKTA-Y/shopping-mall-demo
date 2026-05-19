@@ -33,7 +33,7 @@ exports.seed = async function (knex) {
   let attempts = 0;
   const maxAttempts = TOTAL * 3;
 
-  while (rows.length < TOTAL && attempts < maxAttempts) {
+  while (seen.size < TOTAL && attempts < maxAttempts) {
     attempts++;
     const user = faker.helpers.arrayElement(users);
     const productId = faker.helpers.arrayElement(productIds);

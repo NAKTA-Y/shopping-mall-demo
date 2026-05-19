@@ -2,7 +2,7 @@ const { faker } = require('@faker-js/faker/locale/ko');
 const { randomUUID } = require('crypto');
 
 const TOTAL = 1000;
-const CHUNK = 200;
+const CHUNK = 1000;
 
 // 카테고리별 상품 이름 템플릿
 const PRODUCT_TEMPLATES = {
@@ -80,9 +80,11 @@ exports.seed = async function (knex) {
     });
   }
 
-  for (let i = 0; i < rows.length; i += CHUNK) {
-    await knex('products').insert(rows.slice(i, i + CHUNK));
-  }
+  await knex.transaction(async (trx) => {
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      await trx('products').insert(rows.slice(i, i + CHUNK));
+    }
+  });
 
   console.log(`[seed] products: ${TOTAL}건 삽입 완료`);
 };

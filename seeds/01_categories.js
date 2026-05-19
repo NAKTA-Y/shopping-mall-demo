@@ -25,7 +25,9 @@ const CATEGORIES = [
  * @param { import("knex").Knex } knex
  */
 exports.seed = async function (knex) {
+  await knex.raw('SET FOREIGN_KEY_CHECKS = 0');
   await knex('categories').del();
+  await knex.raw('SET FOREIGN_KEY_CHECKS = 1');
   await knex('categories').insert(CATEGORIES.map((c) => ({
     ...c,
     created_at: new Date(),

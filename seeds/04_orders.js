@@ -36,7 +36,7 @@ exports.seed = async function (knex) {
     let totalAmount = shippingFee;
     for (const p of selectedProducts) {
       const qty = faker.number.int({ min: 1, max: 3 });
-      const images = JSON.parse(p.images || '[]');
+      const images = Array.isArray(p.images) ? p.images : JSON.parse(p.images || '[]');
       totalAmount += p.price * qty;
       orderItems.push({
         id: randomUUID(),

@@ -13,12 +13,16 @@ exports.seed = async function (knex) {
   await knex('users').del();
 
   const rows = [];
-  for (let i = 0; i < TOTAL; i++) {
+  const usedEmails = new Set();
+  while (rows.length < TOTAL) {
     const sex = faker.person.sexType();
+    const email = faker.internet.email({ allowSpecialCharacters: false }).toLowerCase();
+    if (usedEmails.has(email)) continue;
+    usedEmails.add(email);
     rows.push({
       id: randomUUID(),
       name: faker.person.fullName({ sex }),
-      email: faker.internet.email({ allowSpecialCharacters: false }).toLowerCase(),
+      email,
       password_hash: sha256('test1234'),
       phone: faker.phone.number('010-####-####'),
       zip_code: faker.location.zipCode('#####'),

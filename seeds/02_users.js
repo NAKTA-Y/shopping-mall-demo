@@ -9,8 +9,10 @@ const sha256 = (s) => createHash('sha256').update(s).digest('hex');
  * @param { import("knex").Knex } knex
  */
 exports.seed = async function (knex) {
+  await knex.raw('SET FOREIGN_KEY_CHECKS = 0');
   await knex('tokens').del();
   await knex('users').del();
+  await knex.raw('SET FOREIGN_KEY_CHECKS = 1');
 
   const rows = [];
   const usedEmails = new Set();

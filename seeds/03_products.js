@@ -34,11 +34,13 @@ const CAT_IDS = Object.keys(PRODUCT_TEMPLATES);
  * @param { import("knex").Knex } knex
  */
 exports.seed = async function (knex) {
+  await knex.raw('SET FOREIGN_KEY_CHECKS = 0');
   await knex('reviews').del();
   await knex('order_items').del();
   await knex('orders').del();
   await knex('cart_items').del();
   await knex('products').del();
+  await knex.raw('SET FOREIGN_KEY_CHECKS = 1');
 
   const rows = [];
   for (let i = 0; i < TOTAL; i++) {

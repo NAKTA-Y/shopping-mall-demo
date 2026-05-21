@@ -1,9 +1,9 @@
 const { faker } = require('@faker-js/faker/locale/ko');
-const { createHash, randomUUID } = require('crypto');
+const { randomUUID } = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const TOTAL = 1000;
 const CHUNK = 500;
-const sha256 = (s) => createHash('sha256').update(s).digest('hex');
 
 /**
  * @param { import("knex").Knex } knex
@@ -13,6 +13,9 @@ exports.seed = async function (knex) {
   await knex('tokens').del();
   await knex('users').del();
   await knex.raw('SET FOREIGN_KEY_CHECKS = 1');
+
+  // 모든 유저 비밀번호 동일 → 한 번만 해시 계산
+  const passwordHash = await bcrypt.hash('test1234', 12);
 
   const rows = [];
   const usedEmails = new Set();
@@ -25,7 +28,7 @@ exports.seed = async function (knex) {
       id: randomUUID(),
       name: faker.person.fullName({ sex }),
       email,
-      password_hash: sha256('test1234'),
+      password_hash: passwordHash,
       phone: faker.phone.number('010-####-####'),
       zip_code: faker.location.zipCode('#####'),
       address_line1: `${faker.location.city()} ${faker.location.streetAddress()}`,
